@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
           id: user.id,
           name: user.name,
           avatar: user.avatar,
-          distance: Math.round(distance),
+          distance: parseFloat(distance.toFixed(6)),
           location: {
             latitude: user.location.latitude,
             longitude: user.location.longitude,
