@@ -19,7 +19,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<RadarSettings>({
-    radius: 1000, // 1km default
+    radius: 100000, // 100km default - show all users initially
     showOffline: false,
     privacyLevel: 'public',
     autoUpdate: true,
@@ -345,11 +345,11 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
           onClick={() =>
             setSettings((prev) => ({
               ...prev,
-              radius: prev.radius === 1000 ? 500 : 1000,
+              radius: prev.radius === 1000 ? 5000 : 1000,
             }))
           }
         >
-          {settings.radius === 1000 ? '1km' : '500m'} radius
+          {settings.radius === 1000 ? '5km' : '1km'} radius
         </Button>
         <Button
           variant="outline"
@@ -376,20 +376,21 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
               type="number"
               value={customRadius}
               onChange={(e) => setCustomRadius(e.target.value)}
-              placeholder="Enter radius in meters"
+              placeholder="Enter radius in kilometers"
               className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
             <Button
               size="sm"
               onClick={() => {
-                const radius = parseInt(customRadius);
-                if (radius > 0 && radius <= 10000) {
-                  setSettings((prev) => ({ ...prev, radius }));
+                const radiusKm = parseFloat(customRadius);
+                if (radiusKm > 0 && radiusKm <= 100) {
+                  const radiusMeters = radiusKm * 1000;
+                  setSettings((prev) => ({ ...prev, radius: radiusMeters }));
                   setShowRadiusInput(false);
                   setCustomRadius('');
                 }
               }}
-              disabled={!customRadius || parseInt(customRadius) <= 0 || parseInt(customRadius) > 10000}
+              disabled={!customRadius || parseFloat(customRadius) <= 0 || parseFloat(customRadius) > 100}
             >
               Set
             </Button>
@@ -405,7 +406,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
             </Button>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Enter radius in meters (1-10000m)
+            Enter radius in kilometers (0.1-100km)
           </p>
         </div>
       )}
