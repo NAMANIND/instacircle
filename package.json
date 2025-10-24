@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
+    "@prisma/nextjs-monorepo-workaround-plugin": "^6.18.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "next": "16.0.0",
