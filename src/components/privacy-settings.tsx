@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch, SwitchProps } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Select } from '@/components/ui/select';
 
 interface PrivacySettings {
@@ -35,11 +35,7 @@ export function PrivacySettings({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPrivacySettings();
-  }, [userId]);
-
-  const fetchPrivacySettings = async () => {
+  const fetchPrivacySettings = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/users/privacy?userId=${userId}`);
@@ -53,7 +49,11 @@ export function PrivacySettings({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchPrivacySettings();
+  }, [fetchPrivacySettings]);
 
   const updateSettings = async (newSettings: Partial<PrivacySettings>) => {
     if (!settings) return;
@@ -155,7 +155,7 @@ export function PrivacySettings({
           </label>
           <Select
             value={settings.visibility}
-            onChange={(e) => handleVisibilityChange(e.target.value as any)}
+            onChange={(e) => handleVisibilityChange(e.target.value as 'PUBLIC' | 'FRIENDS' | 'PRIVATE')}
             disabled={isSaving}
           >
             <option value="PUBLIC">Everyone</option>

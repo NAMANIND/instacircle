@@ -84,7 +84,7 @@ export function UserManager({ onUserReady }: UserManagerProps) {
         <CardHeader>
           <CardTitle>Welcome, {user.name}!</CardTitle>
           <CardDescription>
-            You're ready to use the radar. Your location will be shared with
+            You&apos;re ready to use the radar. Your location will be shared with
             nearby users.
           </CardDescription>
         </CardHeader>

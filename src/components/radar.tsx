@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Location, NearbyUser, RadarSettings } from '@/types';
 import { locationService } from '@/lib/location';
 import { locationPollingService } from '@/lib/location-polling';
@@ -30,34 +30,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
 
   // Real users will be fetched from the backend
 
-  useEffect(() => {
-    initializeLocation();
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (userId) {
-      startLocationPolling();
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (center) {
-      startRadarAnimation();
-    }
-  }, [center]);
-
-  useEffect(() => {
-    return () => {
-      locationPollingService.stopPolling();
-    };
-  }, []);
-
-  const startLocationPolling = () => {
+  const startLocationPolling = useCallback(() => {
     if (!center || !userId) return;
 
     locationPollingService.startPolling(
@@ -70,37 +43,40 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
       },
       5000 // Poll every 5 seconds
     );
-  };
+  }, [center, userId]);
 
-  const initializeLocation = async () => {
-    setIsLoading(true);
-    setError(null);
+  const drawUsers = useCallback((
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement
+  ) => {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(centerX, centerY) - 20;
 
-    try {
-      const hasPermission = await locationService.isLocationPermissionGranted();
-      if (!hasPermission) {
-        const granted = await locationService.requestLocationPermission();
-        if (!granted) {
-          throw new Error('Location permission denied');
-        }
-      }
+    users.forEach((user) => {
+      if (!settings.showOffline && !user.isOnline) return;
 
-      const location = await locationService.getCurrentLocation();
-      setCenter(location);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get location');
-      // Use mock location for demo
-      setCenter({
-        latitude: 37.7749,
-        longitude: -122.4194,
-        timestamp: Date.now(),
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const distanceRatio = Math.min(user.distance / settings.radius, 1);
+      const angle = Math.random() * Math.PI * 2; // Random angle for demo
 
-  const startRadarAnimation = () => {
+      const x = centerX + Math.cos(angle) * distanceRatio * maxRadius;
+      const y = centerY + Math.sin(angle) * distanceRatio * maxRadius;
+
+      // Draw user dot
+      ctx.fillStyle = user.isOnline ? '#22c55e' : '#6b7280';
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw user name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(user.name, x, y - 10);
+    });
+  }, [users, settings]);
+
+  const startRadarAnimation = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -128,6 +104,61 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
     };
 
     animate();
+  }, [drawUsers]);
+
+  useEffect(() => {
+    initializeLocation();
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      startLocationPolling();
+    }
+  }, [userId, startLocationPolling]);
+
+  useEffect(() => {
+    if (center) {
+      startRadarAnimation();
+    }
+  }, [center, startRadarAnimation]);
+
+  useEffect(() => {
+    return () => {
+      locationPollingService.stopPolling();
+    };
+  }, []);
+
+  const initializeLocation = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const hasPermission = await locationService.isLocationPermissionGranted();
+      if (!hasPermission) {
+        const granted = await locationService.requestLocationPermission();
+        if (!granted) {
+          throw new Error('Location permission denied');
+        }
+      }
+
+      const location = await locationService.getCurrentLocation();
+      setCenter(location);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to get location');
+      // Use mock location for demo
+      setCenter({
+        latitude: 37.7749,
+        longitude: -122.4194,
+        timestamp: Date.now(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const drawRadarBackground = (
@@ -183,37 +214,6 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
     ctx.arc(centerX, centerY, maxRadius, angle - 0.1, angle + 0.1);
     ctx.closePath();
     ctx.fill();
-  };
-
-  const drawUsers = (
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
-  ) => {
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const maxRadius = Math.min(centerX, centerY) - 20;
-
-    users.forEach((user) => {
-      if (!settings.showOffline && !user.isOnline) return;
-
-      const distanceRatio = Math.min(user.distance / settings.radius, 1);
-      const angle = Math.random() * Math.PI * 2; // Random angle for demo
-
-      const x = centerX + Math.cos(angle) * distanceRatio * maxRadius;
-      const y = centerY + Math.sin(angle) * distanceRatio * maxRadius;
-
-      // Draw user dot
-      ctx.fillStyle = user.isOnline ? '#22c55e' : '#6b7280';
-      ctx.beginPath();
-      ctx.arc(x, y, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw user name
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(user.name, x, y - 10);
-    });
   };
 
   const handleUserClick = (user: NearbyUser) => {

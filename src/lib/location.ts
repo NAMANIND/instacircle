@@ -1,4 +1,4 @@
-import { Location, UserLocation, NearbyUser } from '@/types';
+import { Location } from '@/types';
 
 export class LocationService {
   private static instance: LocationService;
