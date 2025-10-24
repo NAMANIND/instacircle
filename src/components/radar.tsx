@@ -43,7 +43,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
       (nearbyUsers) => {
         setUsers(nearbyUsers);
       },
-      1000 // Poll every 5 seconds
+      5000 // Poll every 5 seconds
     );
   }, [center, userId]);
 

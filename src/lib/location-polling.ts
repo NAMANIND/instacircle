@@ -19,7 +19,7 @@ export class LocationPollingService {
     userId: string,
     onLocationUpdate: (location: Location) => void,
     onNearbyUsersUpdate: (users: NearbyUser[]) => void,
-    intervalMs: number = 1000 // 5 seconds default
+    intervalMs: number = 5000 // 5 seconds default
   ) {
     // Don't restart if already polling for the same user
     if (this.isPolling && this.currentUserId === userId) {
