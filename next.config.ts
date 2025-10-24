@@ -1,9 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  serverExternalPackages: ['@prisma/client'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       const {
@@ -13,6 +11,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  turbopack: {},
 };
 
 export default nextConfig;
