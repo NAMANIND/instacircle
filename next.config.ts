@@ -12,4 +12,7 @@ const nextConfig: NextConfig = {
   },
 };
 
+/**
+ * @type {import('next').NextConfig}
+ */
 export default nextConfig;
