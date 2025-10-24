@@ -137,7 +137,7 @@ export class LocationPollingService {
 
     try {
       const response = await fetch(
-        `/api/users/nearby?lat=${location.latitude}&lng=${location.longitude}&radius=1000&userId=${this.currentUserId}`
+        `/api/users/nearby?lat=${location.latitude}&lng=${location.longitude}&radius=2000000&userId=${this.currentUserId}`
       );
 
       if (!response.ok) {

@@ -19,13 +19,11 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<RadarSettings>({
-    radius: 100000, // 100km default - show all users initially
+    radius: 2000000, // 2000km default - show all users initially
     showOffline: false,
     privacyLevel: 'public',
     autoUpdate: true,
   });
-  const [customRadius, setCustomRadius] = useState('');
-  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -67,7 +65,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
         user.location.longitude
       );
 
-      const distanceRatio = Math.min(exactDistance / settings.radius, 1);
+      const distanceRatio = Math.min(exactDistance / 10000, 1); // Fixed scale for visualization
       
       // Calculate angle based on actual bearing from user's location
       const angle = Math.atan2(
@@ -338,26 +336,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
         )}
       </Card>
 
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setSettings((prev) => ({
-              ...prev,
-              radius: prev.radius === 1000 ? 5000 : 1000,
-            }))
-          }
-        >
-          {settings.radius === 1000 ? '5km' : '1km'} radius
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowRadiusInput(!showRadiusInput)}
-        >
-          Custom
-        </Button>
+      <div className="flex justify-center">
         <Button
           variant="outline"
           size="sm"
@@ -368,48 +347,6 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
           {settings.showOffline ? 'Hide offline' : 'Show offline'}
         </Button>
       </div>
-
-      {showRadiusInput && (
-        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <input
-              type="number"
-              value={customRadius}
-              onChange={(e) => setCustomRadius(e.target.value)}
-              placeholder="Enter radius in kilometers"
-              className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-            <Button
-              size="sm"
-              onClick={() => {
-                const radiusKm = parseFloat(customRadius);
-                if (radiusKm > 0 && radiusKm <= 100) {
-                  const radiusMeters = radiusKm * 1000;
-                  setSettings((prev) => ({ ...prev, radius: radiusMeters }));
-                  setShowRadiusInput(false);
-                  setCustomRadius('');
-                }
-              }}
-              disabled={!customRadius || parseFloat(customRadius) <= 0 || parseFloat(customRadius) > 100}
-            >
-              Set
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setShowRadiusInput(false);
-                setCustomRadius('');
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Enter radius in kilometers (0.1-100km)
-          </p>
-        </div>
-      )}
     </div>
   );
 }
