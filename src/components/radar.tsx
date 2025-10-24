@@ -24,6 +24,8 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
     privacyLevel: 'public',
     autoUpdate: true,
   });
+  const [customRadius, setCustomRadius] = useState('');
+  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -55,9 +57,23 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
 
     users.forEach((user) => {
       if (!settings.showOffline && !user.isOnline) return;
+      if (!center || !user.location) return;
 
-      const distanceRatio = Math.min(user.distance / settings.radius, 1);
-      const angle = Math.random() * Math.PI * 2; // Random angle for demo
+      // Calculate exact distance using Haversine formula
+      const exactDistance = locationService.calculateDistance(
+        center.latitude,
+        center.longitude,
+        user.location.latitude,
+        user.location.longitude
+      );
+
+      const distanceRatio = Math.min(exactDistance / settings.radius, 1);
+      
+      // Calculate angle based on actual bearing from user's location
+      const angle = Math.atan2(
+        user.location.longitude - center.longitude,
+        user.location.latitude - center.latitude
+      );
 
       const x = centerX + Math.cos(angle) * distanceRatio * maxRadius;
       const y = centerY + Math.sin(angle) * distanceRatio * maxRadius;
@@ -68,13 +84,17 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
       ctx.arc(x, y, 6, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw user name
+      // Draw user name with exact distance
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(user.name, x, y - 10);
+      
+      // Draw exact distance
+      ctx.font = '10px sans-serif';
+      ctx.fillText(locationService.formatDistance(exactDistance), x, y + 15);
     });
-  }, [users, settings]);
+  }, [users, settings, center]);
 
   const startRadarAnimation = useCallback(() => {
     const canvas = canvasRef.current;
@@ -293,7 +313,17 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
                           {user.name}
                         </p>
                         <p className="text-xs text-slate-600 dark:text-slate-400">
-                          {locationService.formatDistance(user.distance)} away
+                          {center && user.location 
+                            ? locationService.formatDistance(
+                                locationService.calculateDistance(
+                                  center.latitude,
+                                  center.longitude,
+                                  user.location.latitude,
+                                  user.location.longitude
+                                )
+                              ) + ' away'
+                            : locationService.formatDistance(user.distance) + ' away'
+                          }
                         </p>
                       </div>
                     </div>
@@ -308,7 +338,7 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
         )}
       </Card>
 
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -324,6 +354,13 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
         <Button
           variant="outline"
           size="sm"
+          onClick={() => setShowRadiusInput(!showRadiusInput)}
+        >
+          Custom
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() =>
             setSettings((prev) => ({ ...prev, showOffline: !prev.showOffline }))
           }
@@ -331,6 +368,47 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
           {settings.showOffline ? 'Hide offline' : 'Show offline'}
         </Button>
       </div>
+
+      {showRadiusInput && (
+        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <input
+              type="number"
+              value={customRadius}
+              onChange={(e) => setCustomRadius(e.target.value)}
+              placeholder="Enter radius in meters"
+              className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const radius = parseInt(customRadius);
+                if (radius > 0 && radius <= 10000) {
+                  setSettings((prev) => ({ ...prev, radius }));
+                  setShowRadiusInput(false);
+                  setCustomRadius('');
+                }
+              }}
+              disabled={!customRadius || parseInt(customRadius) <= 0 || parseInt(customRadius) > 10000}
+            >
+              Set
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setShowRadiusInput(false);
+                setCustomRadius('');
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+            Enter radius in meters (1-10000m)
+          </p>
+        </div>
+      )}
     </div>
   );
 }
