@@ -246,8 +246,8 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
             People Nearby
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {users.filter((u) => u.isOnline).length} online • {users.length}{' '}
-            total
+            {users.filter((u) => u.isOnline).length} online • {users.filter((u) => settings.showOffline || u.isOnline).length}{' '}
+            {settings.showOffline ? 'total' : 'online'}
           </p>
         </div>
 
@@ -296,40 +296,42 @@ export function Radar({ userId, onUserSelect, className }: RadarProps) {
                   </p>
                 </div>
               ) : (
-                users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    onClick={() => handleUserClick(user)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-3 h-3 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
-                          {center && user.location 
-                            ? locationService.formatDistance(
-                                locationService.calculateDistance(
-                                  center.latitude,
-                                  center.longitude,
-                                  user.location.latitude,
-                                  user.location.longitude
-                                )
-                              ) + ' away'
-                            : locationService.formatDistance(user.distance) + ' away'
-                          }
-                        </p>
+                users
+                  .filter((user) => settings.showOffline || user.isOnline)
+                  .map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                      onClick={() => handleUserClick(user)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-3 h-3 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            {center && user.location 
+                              ? locationService.formatDistance(
+                                  locationService.calculateDistance(
+                                    center.latitude,
+                                    center.longitude,
+                                    user.location.latitude,
+                                    user.location.longitude
+                                  )
+                                ) + ' away'
+                              : locationService.formatDistance(user.distance) + ' away'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {user.interests?.slice(0, 2).join(', ')}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {user.interests?.slice(0, 2).join(', ')}
-                    </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
           </>
